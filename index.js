@@ -144,14 +144,16 @@ class Model {
         // if list and appending or prepending
         } else if (mapping.type === 'list' && (data[field].$append || data[field].$prepend)) {
           if (data[field].$append) {
-            SET.push(`#${field} = list_append(#${field},:${field})`)
+            SET.push(`#${field} = list_append(if_not_exists(#${field}, :empty_${field}), :${field})`)
             values[`:${field}`] = validateType(mapping,field,data[field].$append,data)
           } else {
-            SET.push(`#${field} = list_append(:${field},#${field})`)
+            SET.push(`#${field} = list_append(:${field}, if_not_exists(#${field}, :empty_${field}))`)
             values[`:${field}`] = validateType(mapping,field,data[field].$prepend,data)
           }
           // Add field to names
           names[`#${field}`] = field
+          // Add empty list to values
+          values[`:empty_${field}`] = []
         // if a list and updating by index
         } else if (mapping.type === 'list' && !Array.isArray(data[field]) && typeof data[field] === 'object') {
           Object.keys(data[field]).forEach(i => {
